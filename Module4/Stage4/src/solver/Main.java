@@ -73,6 +73,11 @@ public class Main {
             return;
         }
 
+        if(matrix.size()[0] == 0 || matrix.size()[1] == 0) {
+            System.err.println("Invalid structure of input file: " + file.getAbsolutePath());
+            return;
+        }
+
         // Input matrix output
         System.out.println("Input matrix:");
         System.out.println(matrix);
@@ -81,13 +86,13 @@ public class Main {
         // Solving equation
         System.out.println("Start solving linear equation.");
         LinearEquationSolver solver = new LinearEquationSolver(matrix);
-        String res = solver.solve().getResultString();
+        String res = solver.solve().getResult();
         System.out.println("Rows manipulation:");
         System.out.println(solver.getLogs());
 
         System.out.println(solver.getMatrix());
 
-//        System.out.println("The solution is: (" + res.replaceAll("\n", ", ") + ")");
+        System.out.println("The solution is: (" + res.replaceAll("\n", ", ") + ")");
 
         // Output writing
         try(FileWriter fileWriter = new FileWriter(outputFile)) {

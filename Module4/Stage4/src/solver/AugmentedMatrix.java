@@ -20,7 +20,7 @@ public class AugmentedMatrix {
 
     public void readMatrix(Scanner scanner) throws InputMismatchException {
         int n = scanner.nextInt();
-        int m = n+1;
+        int m = scanner.nextInt();
         matrix = new Row[n];
         for (int i = 0; i < n; i++) {
             matrix[i] = new Row(m);
