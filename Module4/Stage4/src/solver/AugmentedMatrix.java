@@ -36,13 +36,18 @@ public class AugmentedMatrix {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < matrix.length; i++) {
+        for (int i = 0; i < matrix.length; i++) {
             sb.append(Arrays.toString(matrix[i].getRow()));
             sb.append("\n");
         }
         return sb.toString();
     }
 
+    public void swapRows(int firstRowIndex, int secondRowIndex) {
+        Row temp = matrix[firstRowIndex];
+        matrix[firstRowIndex] = matrix[secondRowIndex];
+        matrix[secondRowIndex] = temp;
+    }
 
     public double[][] getMatrix() {
         double[][] copy = new double[matrix.length][];
