@@ -1,11 +1,16 @@
 package solver;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class AugmentedMatrix {
     private Row[] matrix;
+
+    // We don't always need swapHistory, so method which uses this field must check whether it is initialized or not.
+    private ArrayList<SwapInfo> swapHistory;
+
 
     AugmentedMatrix(double[][] matrix) {
         setMatrix(matrix);
@@ -47,6 +52,26 @@ public class AugmentedMatrix {
         Row temp = matrix[firstRowIndex];
         matrix[firstRowIndex] = matrix[secondRowIndex];
         matrix[secondRowIndex] = temp;
+    }
+
+    private void addSwapHistoryEntry(int prevIndex, int nextIndex) {
+        // Initialization check
+        if(swapHistory==null) {
+            swapHistory = new ArrayList<>();
+        }
+        swapHistory.add(new SwapInfo(prevIndex, nextIndex));
+    }
+
+    public void swapColumns(int firstColumnIndex, int secondColumnIndex) {
+        double coeff1, coeff2;
+        for(Row row : matrix) {
+            coeff1 = row.get(firstColumnIndex);
+            coeff2 = row.get(secondColumnIndex);
+            row.set(firstColumnIndex, coeff2);
+            row.set(secondColumnIndex, coeff1);
+        }
+
+        addSwapHistoryEntry(firstColumnIndex, secondColumnIndex);
     }
 
     public double[][] getMatrix() {

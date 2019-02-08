@@ -6,12 +6,16 @@ public class LinearEquationSolver {
     private AugmentedMatrix matrix;
     private StringBuilder logs;
     private double[] result;
+    private String decimalPattern = "#.#####";
 
     LinearEquationSolver(AugmentedMatrix matrix) {
         this.matrix = new AugmentedMatrix(matrix.getMatrix());
         this.logs = new StringBuilder();
     }
 
+    /**
+     * It is step 1 of solving Linear Equation: transforming matrix to upper triangular form
+     */
     private void transformToUpperTriangularForm() {
         Row currentRow; double currentCoefficient;
         Row nextRow; double nextCoefficient;
@@ -25,66 +29,79 @@ public class LinearEquationSolver {
 
 
             // Search for the row with non-zero coefficent
-            while(currentCoefficient == 0) {
+            int columnOffset = 0; boolean foundInColumn = false;
+            double coeff; int innerColNum = colNum;
+            while(currentCoefficient == 0 && innerColNum < n) {
 
                 // If a current coefficient is zero, then we should find row with non-zero coefficient below
-                double coeff;
                 if (currentCoefficient == 0) {
-                    for (int nextRowNum = rowNum + 1; nextRowNum < n; nextRowNum++) {
-                        coeff = matrix.getRow(nextRowNum).get(colNum);
+                    foundInColumn = false;
+                    int nextRowNum;
+                    for (nextRowNum = rowNum; nextRowNum < n; nextRowNum++) {
+                        coeff = matrix.getRow(nextRowNum).get(innerColNum);
                         if (coeff != 0) {
                             // Found row with non-zero i-th coefficient
-                            // We should swap rows
-                            this.matrix.swapRows(rowNum, nextRowNum);
-                            logMessage(String.format("R%d <-> R%d",rowNum, nextRowNum));
-                            // Update currentRow and currentCoefficient variables
-                            currentRow = matrix.getRow(rowNum);
-                            currentCoefficient = coeff;
+                            foundInColumn = true;
                             break;
                         }
                     }
+
+                    if(foundInColumn) {
+                        // We should swap rows
+                        // These variables can be equal if previous column was filled with zeros,
+                        // but on this column this row have non-zero coefficient
+                        if(rowNum != nextRowNum) {
+                            this.matrix.swapRows(rowNum, nextRowNum);
+                            logMessage(String.format("R%d <-> R%d", rowNum, nextRowNum));
+                        }
+                        // If innerColNum != colNum -> we found non-zero coefficient in other column, we should swap columns
+                        if(innerColNum != colNum) {
+                            matrix.swapColumns(colNum, innerColNum);
+                            logMessage(String.format("C%d <-> C%d", colNum, innerColNum));
+                        }
+                        // Update currentRow and currentCoefficient variables after all swaps
+                        currentRow = matrix.getRow(rowNum); // rowNum after swap references to nextRowNum
+                        currentCoefficient = currentRow.get(colNum);
+                        break;
+                    } else {
+                        innerColNum++;
+                    }
+
                 }
 
-                // If search of row with non-zero coefficient failed, we should go search for the right non-zero coefficient
-                if (currentCoefficient == 0) {
-                    colNum++;
-                    logMessage(String.format("Go from processing %d column to processing %d one", colNum-1, colNum));
-                    // Update currentRow and currentCoefficient variables
-                    currentRow = matrix.getRow(rowNum);
-                    currentCoefficient = currentRow.get(colNum);
-                }
             }
 
+            // If after all (full search of non-zero coefficient in whole matrix) we have zero-coefficient
+            // We should end up with matrix processing - matrix already transformed
+            if(currentCoefficient == 0) {
+                return;
+            }
+
+            // Make coefficient equal to one by dividing entire row by this coefficient
+            if(currentCoefficient != 1.0) {
+                currentRow.divide(currentCoefficient);
+                logMessage(String.format("R%d / %s -> R%d", rowNum, new DecimalFormat(decimalPattern).format(currentCoefficient), rowNum));
+            }
+
+            // Perform actions to zero coefficients in other rows
             for(int j = rowNum + 1; j < n; j++) {
                 nextRow = matrix.getRow(j);
                 nextCoefficient = nextRow.get(colNum);
                 // nextCoefficient should be zero
+                currentCoefficient = currentRow.get(colNum); // it must always be equal to one
                 multiplicator = nextCoefficient / currentCoefficient * (-1);
                 nextRow.add(currentRow.multiply(multiplicator, false));
-                logMessage(String.format("%s * R%d + R%d -> R%d", new DecimalFormat("#.###").format(multiplicator), rowNum, j, j));
-
-//                if(coefficient != 1.0) {
-//                    matrix.getRow(j).normalizeRow(i);
-//                    logMessage(String.format("R%d / %s - R%d -> R%d", j, new DecimalFormat("#.###").format(coefficient), i, j));
-//                } else {
-//                    logMessage(String.format("R%d - R%d -> R%d", j, i, j));
-//                }
-//                matrix.getRow(j).subtract(currentRow);
+                logMessage(String.format("%s * R%d + R%d -> R%d", new DecimalFormat(decimalPattern).format(multiplicator), rowNum, j, j));
             }
         }
     }
 
-//    private void transformToLowerTriangularForm() {
-//        Row currentRow;
-//        int n = matrix.size()[0];
-//        for(int i = n-1; i >= 0; i--) {
-//            currentRow = matrix.getRow(i);
-//            normalizeRowsForTransforming(i, currentRow);
-//            for(int j = i-1; j >= 0; j--) {
-//                subtractRowsForTransforming(i,j,currentRow);
-//            }
-//        }
-//    }
+    /**
+     * It is step 2 of solving Linear Equation: reduction of non-diagonal members of upper triangular form of matrix
+     */
+    private void reduceNonDiagonalCoefficients() {
+
+    }
 
     private void tranformToDiagonalForm() {
         transformToUpperTriangularForm();
@@ -92,42 +109,11 @@ public class LinearEquationSolver {
     }
 
     private void logMessage(String msg) {
+        // System.out.println(msg);
         logs.append(msg);
         logs.append("\n");
     }
-//
-//    /**
-//     * Devide every element of matrix[j] row by the element at position i, subtracts currentRow from matrix[j]
-//     * and logs results
-//     * (was originally created to move duplicating code from methods)
-//     * @param i
-//     * @param j
-//     * @param currentRow
-//     */
-//    private void subtractRowsForTransforming(int i, int j, Row currentRow) {
-//        double coefficient = matrix.getRow(j).get(i);
-//        if(coefficient != 1.0) {
-//            matrix.getRow(j).normalizeRow(i);
-//            logMessage(String.format("R%d / %s - R%d -> R%d", j, new DecimalFormat("#.###").format(coefficient), i, j));
-//        } else {
-//            logMessage(String.format("R%d - R%d -> R%d", j, i, j));
-//        }
-//        matrix.getRow(j).subtract(currentRow);
-//    }
 
-//    /**
-//     * Divide every element of the row by the element at position `i` and logs results
-//     * (was originally created to move duplicating code from methods)
-//     * @param i index of the element at the row
-//     * @param currentRow
-//     */
-//    private void normalizeRowsForTransforming(int i, Row currentRow) {
-//        double coefficient = currentRow.get(i);
-//        if(coefficient != 1.0) {
-//            currentRow.normalizeRow(i);
-//            logMessage(String.format("R%d / %s -> R%d", i, new DecimalFormat("#.###").format(coefficient), i));
-//        }
-//    }
 
     public String getLogs() {
         return this.logs.toString();
