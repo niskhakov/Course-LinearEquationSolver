@@ -90,6 +90,7 @@ public class Main {
         System.out.println("Rows manipulation:");
         System.out.println(solver.getLogs());
 
+        System.out.println("Resulting matrix:");
         System.out.println(solver.getMatrix());
 
         System.out.println("The solution is: (" + res.replaceAll("\n", ", ") + ")");

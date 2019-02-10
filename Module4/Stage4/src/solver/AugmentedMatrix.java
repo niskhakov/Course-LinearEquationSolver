@@ -1,5 +1,7 @@
 package solver;
 
+import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.InputMismatchException;
@@ -7,6 +9,7 @@ import java.util.Scanner;
 
 public class AugmentedMatrix {
     private Row[] matrix;
+    private String decimalPattern = "#.####";
 
     // We don't always need swapHistory, so method which uses this field must check whether it is initialized or not.
     private ArrayList<SwapInfo> swapHistory;
@@ -38,14 +41,30 @@ public class AugmentedMatrix {
         return matrix[i].get(j);
     }
 
-    @Override
-    public String toString() {
+
+    public String fancyPrint(String decimalPattern) {
+        if(decimalPattern == null) {
+            decimalPattern = this.decimalPattern;
+        }
         StringBuilder sb = new StringBuilder();
+        double[] row;
         for (int i = 0; i < matrix.length; i++) {
-            sb.append(Arrays.toString(matrix[i].getRow()));
+            row = matrix[i].getRow();
+            sb.append("[");
+            for(int j =0; j < row.length; j++) {
+                sb.append(new DecimalFormat(decimalPattern).format(row[j]));
+                sb.append(", ");
+            }
+            sb.delete(sb.length()-2, sb.length());
+            sb.append("]");
             sb.append("\n");
         }
         return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        return fancyPrint(null);
     }
 
     public void swapRows(int firstRowIndex, int secondRowIndex) {
@@ -62,7 +81,15 @@ public class AugmentedMatrix {
         swapHistory.add(new SwapInfo(prevIndex, nextIndex));
     }
 
+    public void clearSwapHistory() {
+        swapHistory.clear();
+    }
+
     public void swapColumns(int firstColumnIndex, int secondColumnIndex) {
+        swapColumns(firstColumnIndex, secondColumnIndex, true);
+    }
+
+    public void swapColumns(int firstColumnIndex, int secondColumnIndex, boolean writeLog) {
         double coeff1, coeff2;
         for(Row row : matrix) {
             coeff1 = row.get(firstColumnIndex);
@@ -70,11 +97,16 @@ public class AugmentedMatrix {
             row.set(firstColumnIndex, coeff2);
             row.set(secondColumnIndex, coeff1);
         }
-
-        addSwapHistoryEntry(firstColumnIndex, secondColumnIndex);
+        if(writeLog) {
+            addSwapHistoryEntry(firstColumnIndex, secondColumnIndex);
+        }
     }
 
-    public double[][] getMatrix() {
+    public ArrayList<SwapInfo> getSwapHistory() {
+        return swapHistory;
+    }
+
+    public double[][] getMatrixCopy() {
         double[][] copy = new double[matrix.length][];
         for(int i = 0; i < matrix.length; i++) {
             copy[i] = matrix[i].getRow();
@@ -92,6 +124,17 @@ public class AugmentedMatrix {
     public Row getRow(int index) {
         return this.matrix[index];
     }
+
+    public Row getColumnCopy(int index) {
+        int rows = size()[0]; // Number of rows
+        Row col = new Row(rows);
+        for(int i = 0; i < rows; i++) {
+            col.set(i, matrix[i].get(index));
+        }
+        return col;
+    }
+
+
 
     /**
      * Get dimensions of Augmented matrix

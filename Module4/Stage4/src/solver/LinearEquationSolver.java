@@ -1,6 +1,8 @@
 package solver;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 enum SystemType {
     NO_SOLUTIONS,
@@ -13,10 +15,11 @@ public class LinearEquationSolver {
     private AugmentedMatrix matrix;
     private StringBuilder logs;
     private String result;
+    private SystemType resultType;
     private String decimalPattern = "#.#####";
 
     LinearEquationSolver(AugmentedMatrix matrix) {
-        this.matrix = new AugmentedMatrix(matrix.getMatrix());
+        this.matrix = new AugmentedMatrix(matrix.getMatrixCopy());
         this.logs = new StringBuilder();
     }
 
@@ -148,8 +151,11 @@ public class LinearEquationSolver {
         }
     }
 
+
     /**
      * It is step 3 of solving System of Linear Equations: checking for number of solutions
+     *
+     * In this method it is essential that matrix has a pseudo-diagonal form (after 1st and 2nd steps were completed)
      *
      * @return SystemType enum
      */
@@ -174,17 +180,18 @@ public class LinearEquationSolver {
             }
 
             // Check for infinite number of solutions
-            // Count number of non-zero elements (except last element, which corresponds to coefficient B) in last row,
-            // which contains at least one non-zero element
-            int counter = 0;
-            for(int i = 0; i < m-1; i++) {
-                if(currentRow.get(i) != 0) {
-                    counter++;
-                }
-            }
-            if(counter > 1) {
-                // We have two or more non zero coefficients in a "diagonal" form of not-augmented matrix
-                // thus, we have a linear equations system which has infinite number of solutions
+
+            // We look at last non-trivial row and get the matrix[i][j] first non-zero element, if j - is last column of
+            // non-augmented matrix - then we have single solution, if j - is not the last column of the non-augmented
+            // matrix - there is infinite number of solutions
+            // Example:
+            // 1 0 0 | 4                        1 0 0 | 4
+            // 0 1 0 | 5                        0 1 0 | 5
+            // 0 0 0 | 0                        0 0 1 | 0
+            // 0 0 0 | 0                        0 0 0 | 0
+            // INFINITE SOLUTIONS            SINGLE SOLUTION
+            int cols = m -1; // number of columns of non-augmented matrix
+            if(index+1 != cols) {
                 return SystemType.INFINITE_NUMBER_OF_SOLUTIONS;
             }
 
@@ -196,9 +203,34 @@ public class LinearEquationSolver {
         return SystemType.UNKNOWN_ERROR;
     }
 
+    /**
+     * It is step 4 of solving System of Linear Equations: get original columns' order in matrix by looking at swap history
+     *
+     * Look at swap history and do reverse actions in desc order to get original column positions.
+     */
+    public void revokeColumnsSwap() {
+        int[] reversedSwapIndexes;
+        ArrayList<SwapInfo> swapHistory = matrix.getSwapHistory();
+        try {
+            for (int i = swapHistory.size() - 1; i >= 0; i--) {
+                reversedSwapIndexes = swapHistory.get(i).getReversedSwapInfo();
+                matrix.swapColumns(reversedSwapIndexes[0], reversedSwapIndexes[1], false);
+                logMessage(String.format("Reverse: C%d <-> C%d", reversedSwapIndexes[0], reversedSwapIndexes[1]));
+            }
+            matrix.clearSwapHistory();
+        } catch(NullPointerException e) {
+            // Ignore:
+            // It means that we haven't swapped any columns and swapHistory is not initialized yet
+            // (we do not initialize swapHistory to preserve memory, i know that in general this is possibly stupid =) )
+            return;
+        }
+    }
+
     private void transformToDiagonalForm() {
         transformToUpperTriangularForm();
         reduceNonDiagonalCoefficients();
+        resultType = checkResult();
+        revokeColumnsSwap();
     }
 
     private void logMessage(String msg) {
@@ -207,9 +239,25 @@ public class LinearEquationSolver {
         logs.append("\n");
     }
 
-    private double[] getSolution() {
-        // TODO: implement method
-        return new double[]{-1, -1};
+    /**
+     * Get coefficients of single solution
+     *
+     * @return solution - array of coefficients
+     */
+    private double[] getSingleSolution() {
+        int n = matrix.size()[0]; // Number of rows
+        int m = matrix.size()[1]; // Number of columns of augmented matrix
+        double[] solution = new double[m-1];
+        int solutionIndex;
+        for(int rowNum = 0; rowNum < n; rowNum++) {
+            if(matrix.getRow(rowNum).isZeroFilled()) {
+                continue;
+            }
+
+            solutionIndex = matrix.getRow(rowNum).getIndexOfFirstNonZeroElement();
+            solution[solutionIndex] = matrix.getRow(rowNum).get(m-1);
+        }
+        return solution;
     }
 
     public String getLogs() {
@@ -223,9 +271,7 @@ public class LinearEquationSolver {
 
     public LinearEquationSolver solve() {
         transformToDiagonalForm();
-        SystemType type = checkResult();
-
-        switch(type) {
+        switch(resultType) {
             case NO_SOLUTIONS:
                 result = "No solutions";
                 return this;
@@ -233,7 +279,7 @@ public class LinearEquationSolver {
                 result = "Infinite solutions";
                 return this;
             case SINGLE_SOLUTION:
-                double[] res = getSolution();
+                double[] res = getSingleSolution();
                 StringBuilder sb = new StringBuilder();
                 for(double coefficient: res) {
                     sb.append(new DecimalFormat(decimalPattern).format(coefficient));
