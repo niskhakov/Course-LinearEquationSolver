@@ -1,11 +1,9 @@
 package solver;
 
-import java.lang.reflect.Array;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.InputMismatchException;
 import java.util.Scanner;
+
 
 public class AugmentedMatrix {
     private Row[] matrix;
@@ -15,7 +13,7 @@ public class AugmentedMatrix {
     private ArrayList<SwapInfo> swapHistory;
 
 
-    AugmentedMatrix(double[][] matrix) {
+    AugmentedMatrix(Complex[][] matrix) {
         setMatrix(matrix);
     }
 
@@ -28,16 +26,16 @@ public class AugmentedMatrix {
         for (int i = 0; i < n; i++) {
             matrix[i] = new Row(m);
             for (int j = 0; j < m; j++) {
-                this.set(i, j, scanner.nextDouble());
+                this.set(i, j, new Complex(scanner.next()));
             }
         }
     }
 
-    public void set(int i, int j, double value) {
+    public void set(int i, int j, Complex value) {
         matrix[i].set(j, value);
     }
 
-    public double get(int i, int j) {
+    public Complex get(int i, int j) {
         return matrix[i].get(j);
     }
 
@@ -47,12 +45,13 @@ public class AugmentedMatrix {
             decimalPattern = this.decimalPattern;
         }
         StringBuilder sb = new StringBuilder();
-        double[] row;
+        Complex[] row;
         for (int i = 0; i < matrix.length; i++) {
             row = matrix[i].getRow();
             sb.append("[");
             for(int j =0; j < row.length; j++) {
-                sb.append(new DecimalFormat(decimalPattern).format(row[j]));
+                row[j].setDecimalPattern(decimalPattern);
+                sb.append(row[j].toString());
                 sb.append(", ");
             }
             sb.delete(sb.length()-2, sb.length());
@@ -90,7 +89,7 @@ public class AugmentedMatrix {
     }
 
     public void swapColumns(int firstColumnIndex, int secondColumnIndex, boolean writeLog) {
-        double coeff1, coeff2;
+        Complex coeff1, coeff2;
         for(Row row : matrix) {
             coeff1 = row.get(firstColumnIndex);
             coeff2 = row.get(secondColumnIndex);
@@ -106,15 +105,15 @@ public class AugmentedMatrix {
         return swapHistory;
     }
 
-    public double[][] getMatrixCopy() {
-        double[][] copy = new double[matrix.length][];
+    public Complex[][] getMatrixCopy() {
+        Complex[][] copy = new Complex[matrix.length][];
         for(int i = 0; i < matrix.length; i++) {
             copy[i] = matrix[i].getRow();
         }
         return copy;
     }
 
-    public void setMatrix(double[][] matrix) {
+    public void setMatrix(Complex[][] matrix) {
         this.matrix = new Row[matrix.length];
         for(int i = 0; i < matrix.length; i++) {
             this.matrix[i] = new Row(matrix[i]);

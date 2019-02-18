@@ -1,8 +1,7 @@
 package solver;
 
-import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
+
 
 enum SystemType {
     NO_SOLUTIONS,
@@ -27,9 +26,9 @@ public class LinearEquationSolver {
      * It is step 1 of solving System of Linear Equations: transforming matrix to upper triangular form
      */
     private void transformToUpperTriangularForm() {
-        Row currentRow; double currentCoefficient;
-        Row nextRow; double nextCoefficient;
-        double multiplicator;
+        Row currentRow; Complex currentCoefficient;
+        Row nextRow; Complex nextCoefficient;
+        Complex multiplicator;
         int n = matrix.size()[0]; // number of rows
         int m = matrix.size()[1]; // number of cols
         int rowNum, colNum;
@@ -41,16 +40,16 @@ public class LinearEquationSolver {
 
             // Search for the row with non-zero coefficent
             int columnOffset = 0; boolean foundInColumn = false;
-            double coeff; int innerColNum = colNum;
-            while(currentCoefficient == 0 && innerColNum < m-1) {
+            Complex coeff; int innerColNum = colNum;
+            while(currentCoefficient.equals(Complex.ZERO) && innerColNum < m-1) {
 
                 // If a current coefficient is zero, then we should find row with non-zero coefficient below
-                if (currentCoefficient == 0) {
+                if (currentCoefficient.equals(Complex.ZERO)) {
                     foundInColumn = false;
                     int nextRowNum;
                     for (nextRowNum = rowNum; nextRowNum < n; nextRowNum++) {
                         coeff = matrix.getRow(nextRowNum).get(innerColNum);
-                        if (coeff != 0) {
+                        if (!coeff.equals(Complex.ZERO)) {
                             // Found row with non-zero i-th coefficient
                             foundInColumn = true;
                             break;
@@ -84,14 +83,14 @@ public class LinearEquationSolver {
 
             // If after all (full search of non-zero coefficient in whole matrix) we have zero-coefficient
             // We should end up with matrix processing - matrix already transformed
-            if(currentCoefficient == 0) {
+            if(currentCoefficient.equals(Complex.ZERO)) {
                 return;
             }
 
             // Make coefficient equal to one by dividing entire row by this coefficient
-            if(currentCoefficient != 1.0) {
+            if(!currentCoefficient.equals(new Complex(1, 0))) {
                 currentRow.divide(currentCoefficient);
-                logMessage(String.format("R%d / %s -> R%d", rowNum, new DecimalFormat(decimalPattern).format(currentCoefficient), rowNum));
+                logMessage(String.format("R%d / %s -> R%d", rowNum, currentCoefficient.toString(), rowNum));
             }
 
             // Perform actions to zero coefficients in other rows
@@ -100,10 +99,10 @@ public class LinearEquationSolver {
                 nextCoefficient = nextRow.get(colNum);
                 currentCoefficient = currentRow.get(colNum); // it must always be equal to one
                 // nextCoefficient should be zero
-                if(nextCoefficient != 0) {
-                    multiplicator = nextCoefficient / currentCoefficient * (-1);
+                if(!nextCoefficient.equals(Complex.ZERO)) {
+                    multiplicator = nextCoefficient.divide(currentCoefficient).multiply(new Complex(-1, 0));
                     nextRow.add(currentRow.multiply(multiplicator, false));
-                    logMessage(String.format("%s * R%d + R%d -> R%d", new DecimalFormat(decimalPattern).format(multiplicator), rowNum, j, j));
+                    logMessage(String.format("%s * R%d + R%d -> R%d", multiplicator.toString(), rowNum, j, j));
                 }
             }
         }
@@ -117,14 +116,14 @@ public class LinearEquationSolver {
         int rowNum, colNum, nextRowNum;
         int n = matrix.size()[0];
         int coefficientIndex = -1;
-        double currentCoefficient, nextCoefficient, multiplicator;
+        Complex currentCoefficient, nextCoefficient, multiplicator;
         Row row; Row nextRow;
         for(rowNum = n-1; rowNum >= 0; rowNum--) {
 
             // Find first non-zero element
             row = matrix.getRow(rowNum);
             for(int i = 0; i < row.size()-1; i++) {
-                if(row.get(i) != 0) {
+                if(!row.get(i).equals(Complex.ZERO)) {
                     coefficientIndex = i;
                     break;
                 }
@@ -141,10 +140,10 @@ public class LinearEquationSolver {
                 currentCoefficient = row.get(coefficientIndex);
                 nextRow = matrix.getRow(nextRowNum);
                 nextCoefficient = nextRow.get(coefficientIndex);
-                if (nextCoefficient != 0) {
-                    multiplicator = nextCoefficient / currentCoefficient * (-1);
+                if (!nextCoefficient.equals(Complex.ZERO)) {
+                    multiplicator = nextCoefficient.divide(currentCoefficient).multiply(new Complex(-1, 0));
                     nextRow.add(row.multiply(multiplicator, false));
-                    logMessage(String.format("%s * R%d + R%d -> R%d", new DecimalFormat(decimalPattern).format(multiplicator), rowNum, nextRowNum, nextRowNum));
+                    logMessage(String.format("%s * R%d + R%d -> R%d", multiplicator.toString(), rowNum, nextRowNum, nextRowNum));
                 }
             }
 
@@ -244,10 +243,10 @@ public class LinearEquationSolver {
      *
      * @return solution - array of coefficients
      */
-    private double[] getSingleSolution() {
+    private Complex[] getSingleSolution() {
         int n = matrix.size()[0]; // Number of rows
         int m = matrix.size()[1]; // Number of columns of augmented matrix
-        double[] solution = new double[m-1];
+        Complex[] solution = new Complex[m-1];
         int solutionIndex;
         for(int rowNum = 0; rowNum < n; rowNum++) {
             if(matrix.getRow(rowNum).isZeroFilled()) {
@@ -279,10 +278,10 @@ public class LinearEquationSolver {
                 result = "Infinite solutions";
                 return this;
             case SINGLE_SOLUTION:
-                double[] res = getSingleSolution();
+                Complex[] res = getSingleSolution();
                 StringBuilder sb = new StringBuilder();
-                for(double coefficient: res) {
-                    sb.append(new DecimalFormat(decimalPattern).format(coefficient));
+                for(Complex coefficient: res) {
+                    sb.append(coefficient.toString());
                     sb.append("\n");
                 }
                 sb.deleteCharAt(sb.length()-1);

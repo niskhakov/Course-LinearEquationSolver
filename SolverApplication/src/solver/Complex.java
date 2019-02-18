@@ -1,11 +1,15 @@
 package solver;
 
+import java.text.DecimalFormat;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Complex {
-    private double re;
-    private double im;
+    private final double re;
+    private final double im;
+    private String decimalPattern = "#.####";
+
+    public static final Complex ZERO = new Complex(0, 0);
 
     public Complex(double real, double imag) {
         this.re = real;
@@ -17,6 +21,21 @@ public class Complex {
         this.re = cmp.re;
         this.im = cmp.im;
     }
+
+    public Complex(Complex b) {
+        this.re = b.re;
+        this.im = b.im;
+    }
+
+    @Override
+    public boolean equals(Object x) {
+        if (x == null) return false;
+        if (this.getClass() != x.getClass()) return false;
+        Complex that = (Complex) x;
+        return (this.re == that.re) && (this.im == that.im);
+    }
+
+
 
     public Complex add(Complex b) {
         Complex a = this;
@@ -86,13 +105,18 @@ public class Complex {
         return new Complex(rep, imp);
     }
 
+    public void setDecimalPattern(String pattern) {
+        this.decimalPattern = pattern;
+    }
+
     @Override
     public String toString() {
         String ans;
-        if (im == 0) return re + "";
-        if (re == 0) return im + "i";
-        if (im <  0) return re + " - " + (-im) + "i";
-        return re + " + " + im + "i";
+        DecimalFormat f = new DecimalFormat(decimalPattern);
+        if (im == 0) return f.format(re) + "";
+        if (re == 0) return f.format(im) + "i";
+        if (im <  0) return f.format(re) + "-" + f.format(-im) + "i";
+        return f.format(re) + "+" + f.format(im) + "i";
     }
 
 
