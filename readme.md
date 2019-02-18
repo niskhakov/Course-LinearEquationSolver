@@ -2,7 +2,7 @@
 
 This program solves a system of linear equations with complex variables in case of single determined solution, in other cases it displays whether system has no solution or has infinite number of solutions.
 
-This repository is implementation of one of the projects which is recommended by [HyperSkill platform](https://hyperskill.org) to learn Java development.   
+This repository is implementation of one of the projects which is recommended by [Hyperskill platform](https://hyperskill.org) to learn Java development.   
 
 * __Module 1__ - simple equation solver (ax + b = 0)
 * __Module 2__ - equation solver of a system with two variables
@@ -61,4 +61,4 @@ Run program with command: `java solver.Main -in in.txt -out out.txt` or `java so
 
 ## Authors
 * **Nail Iskhakov** 
-* **HyperSkill Platform** - https://hi.hyperskill.org/about
+* **Hyperskill Platform** - https://hi.hyperskill.org/about
